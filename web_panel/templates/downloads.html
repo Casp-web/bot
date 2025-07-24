@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+
+{% block title %}Завантаження - YouTube Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-download text-primary"></i>
+            Моніторинг завантажень
+        </h1>
+    </div>
+</div>
+
+<!-- Download Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Всього завантажень
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-downloads">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-download fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Успішні
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="successful-downloads">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Помилки
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="failed-downloads">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Сьогодні
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="downloads-today">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Downloads Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list"></i> Останні завантаження
+                </h6>
+                <div>
+                    <button class="btn btn-sm btn-primary" onclick="refreshDownloads()">
+                        <i class="fas fa-sync"></i> Оновити
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="exportDownloads()">
+                        <i class="fas fa-download"></i> Експорт
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="searchDownloads" 
+                               placeholder="Пошук за назвою або користувачем...">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="filterType">
+                            <option value="">Всі типи</option>
+                            <option value="video">Відео</option>
+                            <option value="audio">Аудіо</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="filterStatus">
+                            <option value="">Всі статуси</option>
+                            <option value="completed">Завершено</option>
+                            <option value="failed">Помилка</option>
+                            <option value="processing">В процесі</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="filterPeriod">
+                            <option value="">Весь час</option>
+                            <option value="today">Сьогодні</option>
+                            <option value="week">Цей тиждень</option>
+                            <option value="month">Цей місяць</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="sortBy">
+                            <option value="created_at">За датою</option>
+                            <option value="title">За назвою</option>
+                            <option value="user">За користувачем</option>
+                            <option value="status">За статусом</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="downloadsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Назва</th>
+                                <th>Користувач</th>
+                                <th>Тип</th>
+                                <th>Розмір</th>
+                                <th>Тривалість</th>
+                                <th>Статус</th>
+                                <th>Дата</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="downloads-table-body">
+                            <tr>
+                                <td colspan="9" class="text-center">
+                                    <i class="fas fa-spinner fa-spin"></i> Завантаження даних...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Downloads pagination">
+                    <ul class="pagination justify-content-center" id="downloadsPagination">
+                        <!-- Pagination will be generated by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Download Details Modal -->
+<div class="modal fade" id="downloadDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i> Деталі завантаження
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="downloadDetailsContent">
+                <!-- Content will be loaded by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="button" class="btn btn-danger" onclick="deleteDownload()">
+                    <i class="fas fa-trash"></i> Видалити
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentDownloads = [];
+let currentPage = 1;
+let downloadsPerPage = 15;
+let selectedDownloadId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDownloads();
+    
+    // Search and filter functionality
+    document.getElementById('searchDownloads').addEventListener('input', debounce(filterDownloads, 300));
+    document.getElementById('filterType').addEventListener('change', filterDownloads);
+    document.getElementById('filterStatus').addEventListener('change', filterDownloads);
+    document.getElementById('filterPeriod').addEventListener('change', filterDownloads);
+    document.getElementById('sortBy').addEventListener('change', sortDownloads);
+});
+
+function loadDownloads() {
+    fetch('/api/downloads')
+        .then(response => response.json())
+        .then(data => {
+            // Update statistics
+            document.getElementById('total-downloads').textContent = data.total_downloads || 0;
+            document.getElementById('successful-downloads').textContent = data.successful_downloads || 0;
+            document.getElementById('failed-downloads').textContent = data.failed_downloads || 0;
+            document.getElementById('downloads-today').textContent = data.downloads_today || 0;
+            
+            // Store downloads data
+            currentDownloads = data.recent_downloads || [];
+            
+            // Generate mock downloads for demo
+            if (currentDownloads.length === 0) {
+                currentDownloads = generateMockDownloads();
+            }
+            
+            displayDownloads();
+        })
+        .catch(error => {
+            console.error('Error loading downloads:', error);
+            showError('Помилка завантаження даних');
+        });
+}
+
+function generateMockDownloads() {
+    const mockDownloads = [];
+    const titles = [
+        'Як навчитися програмувати за 30 днів',
+        'Найкращі поради для розробників',
+        'Python для початківців',
+        'JavaScript і React',
+        'Машинне навчання простими словами',
+        'Веб-дизайн 2024',
+        'Docker і контейнеризація',
+        'Git і GitHub для розробників'
+    ];
+    const users = ['Олександр', 'Марія', 'Іван', 'Анна', 'Петро', 'Катерина'];
+    const statuses = ['completed', 'failed', 'processing'];
+    const types = ['video', 'audio'];
+    
+    for (let i = 1; i <= 50; i++) {
+        const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+        const randomUser = users[Math.floor(Math.random() * users.length)];
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        const randomSize = Math.floor(Math.random() * 500) + 10; // 10-510 MB
+        const randomDuration = Math.floor(Math.random() * 3600) + 60; // 1-60 minutes
+        
+        mockDownloads.push({
+            id: i,
+            title: `${randomTitle} #${i}`,
+            user: randomUser,
+            user_id: 100000000 + i,
+            type: randomType,
+            size_mb: randomSize,
+            duration: randomDuration,
+            status: randomStatus,
+            created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+            url: `https://youtube.com/watch?v=example${i}`,
+            file_path: randomStatus === 'completed' ? `/downloads/${randomType}_${i}.${randomType === 'video' ? 'mp4' : 'mp3'}` : null,
+            error_message: randomStatus === 'failed' ? 'Помилка завантаження з YouTube' : null
+        });
+    }
+    
+    return mockDownloads.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function displayDownloads() {
+    const tbody = document.getElementById('downloads-table-body');
+    const startIndex = (currentPage - 1) * downloadsPerPage;
+    const endIndex = startIndex + downloadsPerPage;
+    const pageDownloads = currentDownloads.slice(startIndex, endIndex);
+    
+    if (pageDownloads.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted">
+                    <i class="fas fa-info-circle"></i> Завантажень не знайдено
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = pageDownloads.map(download => `
+        <tr>
+            <td>${download.id}</td>
+            <td>
+                <div class="text-truncate" style="max-width: 200px;" title="${download.title}">
+                    ${download.title}
+                </div>
+            </td>
+            <td>${download.user}</td>
+            <td>
+                <span class="badge bg-${download.type === 'video' ? 'primary' : 'success'}">
+                    <i class="fas fa-${download.type === 'video' ? 'video' : 'music'}"></i>
+                    ${download.type === 'video' ? 'Відео' : 'Аудіо'}
+                </span>
+            </td>
+            <td>${download.size_mb} МБ</td>
+            <td>${formatDuration(download.duration)}</td>
+            <td>
+                ${getStatusBadge(download.status)}
+            </td>
+            <td>${formatDate(download.created_at)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="showDownloadDetails(${download.id})" title="Деталі">
+                    <i class="fas fa-eye"></i>
+                </button>
+                ${download.status === 'completed' ? `
+                    <button class="btn btn-sm btn-outline-success" onclick="downloadFile(${download.id})" title="Завантажити">
+                        <i class="fas fa-download"></i>
+                    </button>
+                ` : ''}
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteDownload(${download.id})" title="Видалити">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    updatePagination();
+}
+
+function getStatusBadge(status) {
+    switch (status) {
+        case 'completed':
+            return '<span class="badge bg-success">Завершено</span>';
+        case 'failed':
+            return '<span class="badge bg-danger">Помилка</span>';
+        case 'processing':
+            return '<span class="badge bg-warning">В процесі</span>';
+        default:
+            return '<span class="badge bg-secondary">Невідомо</span>';
+    }
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(currentDownloads.length / downloadsPerPage);
+    const pagination = document.getElementById('downloadsPagination');
+    
+    let paginationHTML = '';
+    
+    // Previous button
+    paginationHTML += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Попередня</a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage || i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Next button
+    paginationHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Наступна</a>
+        </li>
+    `;
+    
+    pagination.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(currentDownloads.length / downloadsPerPage);
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        displayDownloads();
+    }
+}
+
+function filterDownloads() {
+    // Get original data if we don't have it
+    if (!window.originalDownloads) {
+        window.originalDownloads = [...currentDownloads];
+    }
+    
+    const searchTerm = document.getElementById('searchDownloads').value.toLowerCase();
+    const typeFilter = document.getElementById('filterType').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    const periodFilter = document.getElementById('filterPeriod').value;
+    
+    let filteredDownloads = window.originalDownloads.filter(download => {
+        const matchesSearch = !searchTerm || 
+            download.title?.toLowerCase().includes(searchTerm) ||
+            download.user?.toLowerCase().includes(searchTerm);
+        
+        const matchesType = !typeFilter || download.type === typeFilter;
+        const matchesStatus = !statusFilter || download.status === statusFilter;
+        
+        let matchesPeriod = true;
+        if (periodFilter) {
+            const downloadDate = new Date(download.created_at);
+            const now = new Date();
+            
+            switch (periodFilter) {
+                case 'today':
+                    matchesPeriod = downloadDate.toDateString() === now.toDateString();
+                    break;
+                case 'week':
+                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    matchesPeriod = downloadDate >= weekAgo;
+                    break;
+                case 'month':
+                    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    matchesPeriod = downloadDate >= monthAgo;
+                    break;
+            }
+        }
+        
+        return matchesSearch && matchesType && matchesStatus && matchesPeriod;
+    });
+    
+    currentDownloads = filteredDownloads;
+    currentPage = 1;
+    displayDownloads();
+}
+
+function sortDownloads() {
+    const sortBy = document.getElementById('sortBy').value;
+    
+    currentDownloads.sort((a, b) => {
+        switch (sortBy) {
+            case 'created_at':
+                return new Date(b.created_at) - new Date(a.created_at);
+            case 'title':
+                return (a.title || '').localeCompare(b.title || '');
+            case 'user':
+                return (a.user || '').localeCompare(b.user || '');
+            case 'status':
+                return (a.status || '').localeCompare(b.status || '');
+            default:
+                return 0;
+        }
+    });
+    
+    displayDownloads();
+}
+
+function showDownloadDetails(downloadId) {
+    const download = currentDownloads.find(d => d.id === downloadId);
+    if (!download) return;
+    
+    selectedDownloadId = downloadId;
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Основна інформація:</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>ID:</strong></td><td>${download.id}</td></tr>
+                    <tr><td><strong>Назва:</strong></td><td>${download.title}</td></tr>
+                    <tr><td><strong>URL:</strong></td><td><a href="${download.url}" target="_blank">${download.url}</a></td></tr>
+                    <tr><td><strong>Користувач:</strong></td><td>${download.user} (${download.user_id})</td></tr>
+                    <tr><td><strong>Тип:</strong></td><td>${download.type === 'video' ? 'Відео' : 'Аудіо'}</td></tr>
+                    <tr><td><strong>Розмір:</strong></td><td>${download.size_mb} МБ</td></tr>
+                    <tr><td><strong>Тривалість:</strong></td><td>${formatDuration(download.duration)}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Статус завантаження:</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Статус:</strong></td><td>${getStatusBadge(download.status)}</td></tr>
+                    <tr><td><strong>Створено:</strong></td><td>${formatDate(download.created_at)}</td></tr>
+                    ${download.file_path ? `<tr><td><strong>Файл:</strong></td><td>${download.file_path}</td></tr>` : ''}
+                    ${download.error_message ? `<tr><td><strong>Помилка:</strong></td><td class="text-danger">${download.error_message}</td></tr>` : ''}
+                </table>
+                
+                ${download.status === 'completed' ? `
+                    <div class="mt-3">
+                        <button class="btn btn-success btn-sm" onclick="downloadFile(${download.id})">
+                            <i class="fas fa-download"></i> Завантажити файл
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="copyToClipboard('${download.url}')">
+                            <i class="fas fa-copy"></i> Копіювати URL
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('downloadDetailsContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('downloadDetailsModal')).show();
+}
+
+function downloadFile(downloadId) {
+    const download = currentDownloads.find(d => d.id === downloadId);
+    if (!download || download.status !== 'completed') {
+        showNotification('Файл недоступний для завантаження', 'warning');
+        return;
+    }
+    
+    // In a real implementation, this would download the actual file
+    showNotification(`Завантаження файлу: ${download.title}`, 'info');
+}
+
+function deleteDownload(downloadId) {
+    if (!downloadId) downloadId = selectedDownloadId;
+    
+    const download = currentDownloads.find(d => d.id === downloadId);
+    if (!download) return;
+    
+    if (!confirm(`Ви впевнені, що хочете видалити завантаження "${download.title}"?`)) {
+        return;
+    }
+    
+    // Remove from current data
+    currentDownloads = currentDownloads.filter(d => d.id !== downloadId);
+    if (window.originalDownloads) {
+        window.originalDownloads = window.originalDownloads.filter(d => d.id !== downloadId);
+    }
+    
+    // Close modal if open
+    const modal = bootstrap.Modal.getInstance(document.getElementById('downloadDetailsModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    displayDownloads();
+    showNotification('Завантаження видалено', 'success');
+}
+
+function refreshDownloads() {
+    // Reset filters
+    document.getElementById('searchDownloads').value = '';
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterPeriod').value = '';
+    
+    // Reset original data
+    delete window.originalDownloads;
+    
+    loadDownloads();
+    showNotification('Дані оновлено', 'success');
+}
+
+function exportDownloads() {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "ID,Title,User,Type,Size (MB),Duration,Status,Date,URL\n"
+        + currentDownloads.map(download => 
+            `${download.id},"${download.title}","${download.user}","${download.type}",${download.size_mb},"${formatDuration(download.duration)}","${download.status}","${formatDate(download.created_at)}","${download.url}"`
+        ).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "downloads_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Дані експортовано', 'success');
+}
+
+function formatDuration(seconds) {
+    if (!seconds) return '0:00';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    } else {
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Невідомо';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uk-UA') + ' ' + date.toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'});
+}
+
+function showNotification(message, type) {
+    if (window.YouTubeBotPanel && window.YouTubeBotPanel.showNotification) {
+        window.YouTubeBotPanel.showNotification(message, type);
+    } else {
+        alert(message);
+    }
+}
+
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>
+{% endblock %}

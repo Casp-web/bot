@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block title %}Конфігурація - YouTube Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cog text-primary"></i>
+            Конфігурація бота
+        </h1>
+    </div>
+</div>
+
+<!-- Configuration Form -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-edit"></i> Налаштування бота
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="configForm">
+                    <!-- Bot Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary">
+                                <i class="fas fa-robot"></i> Основні налаштування
+                            </h5>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bot_name" class="form-label">Назва бота</label>
+                                <input type="text" class="form-control" id="bot_name" 
+                                       value="{{ config.bot.BOT_NAME }}" placeholder="YouTubeDownloaderBot">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bot_token" class="form-label">Telegram Bot Token</label>
+                                <input type="password" class="form-control" id="bot_token" 
+                                       value="{{ config.bot.BOT_TOKEN }}" placeholder="Bot Token">
+                                <div class="form-text">Токен від @BotFather</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Download Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-success">
+                                <i class="fas fa-download"></i> Налаштування завантаження
+                            </h5>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_file_size_mb" class="form-label">Макс. розмір файлу (МБ)</label>
+                                <input type="number" class="form-control" id="max_file_size_mb" 
+                                       value="{{ config.download.MAX_FILE_SIZE_MB }}" min="1" max="2000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_duration_minutes" class="form-label">Макс. тривалість (хв)</label>
+                                <input type="number" class="form-control" id="max_duration_minutes" 
+                                       value="{{ config.download.MAX_DURATION_MINUTES }}" min="1" max="180">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quality_video" class="form-label">Якість відео за замовчуванням</label>
+                                <select class="form-select" id="quality_video">
+                                    <option value="360p" {% if config.download.QUALITY_VIDEO == '360p' %}selected{% endif %}>360p</option>
+                                    <option value="480p" {% if config.download.QUALITY_VIDEO == '480p' %}selected{% endif %}>480p</option>
+                                    <option value="720p" {% if config.download.QUALITY_VIDEO == '720p' %}selected{% endif %}>720p</option>
+                                    <option value="1080p" {% if config.download.QUALITY_VIDEO == '1080p' %}selected{% endif %}>1080p</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quality_audio" class="form-label">Якість аудіо за замовчуванням</label>
+                                <select class="form-select" id="quality_audio">
+                                    <option value="128k" {% if config.download.QUALITY_AUDIO == '128k' %}selected{% endif %}>128 kbps</option>
+                                    <option value="192k" {% if config.download.QUALITY_AUDIO == '192k' %}selected{% endif %}>192 kbps</option>
+                                    <option value="256k" {% if config.download.QUALITY_AUDIO == '256k' %}selected{% endif %}>256 kbps</option>
+                                    <option value="320k" {% if config.download.QUALITY_AUDIO == '320k' %}selected{% endif %}>320 kbps</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="download_path" class="form-label">Шлях для завантажень</label>
+                                <input type="text" class="form-control" id="download_path" 
+                                       value="{{ config.download.DOWNLOAD_PATH }}" placeholder="./downloads">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="temp_path" class="form-label">Тимчасовий шлях</label>
+                                <input type="text" class="form-control" id="temp_path" 
+                                       value="{{ config.download.TEMP_PATH }}" placeholder="./temp">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rate Limits -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-warning">
+                                <i class="fas fa-shield-alt"></i> Обмеження та захист
+                            </h5>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_downloads_per_user_hour" class="form-label">Макс. завантажень на годину</label>
+                                <input type="number" class="form-control" id="max_downloads_per_user_hour" 
+                                       value="{{ config.limits.MAX_DOWNLOADS_PER_USER_HOUR }}" min="1" max="100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="rate_limit_requests_per_minute" class="form-label">Макс. запитів на хвилину</label>
+                                <input type="number" class="form-control" id="rate_limit_requests_per_minute" 
+                                       value="{{ config.limits.RATE_LIMIT_REQUESTS_PER_MINUTE }}" min="1" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logging Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info">
+                                <i class="fas fa-file-alt"></i> Налаштування логування
+                            </h5>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="log_level" class="form-label">Рівень логування</label>
+                                <select class="form-select" id="log_level">
+                                    <option value="DEBUG" {% if config.logging.LOG_LEVEL == 'DEBUG' %}selected{% endif %}>DEBUG</option>
+                                    <option value="INFO" {% if config.logging.LOG_LEVEL == 'INFO' %}selected{% endif %}>INFO</option>
+                                    <option value="WARNING" {% if config.logging.LOG_LEVEL == 'WARNING' %}selected{% endif %}>WARNING</option>
+                                    <option value="ERROR" {% if config.logging.LOG_LEVEL == 'ERROR' %}selected{% endif %}>ERROR</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="log_file" class="form-label">Файл логів</label>
+                                <input type="text" class="form-control" id="log_file" 
+                                       value="{{ config.logging.LOG_FILE }}" placeholder="./logs/bot.log">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-save"></i> Зберегти налаштування
+                            </button>
+                            <button type="button" class="btn btn-secondary me-2" onclick="resetForm()">
+                                <i class="fas fa-undo"></i> Скинути
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="loadCurrentConfig()">
+                                <i class="fas fa-sync"></i> Оновити
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Preview -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-eye"></i> Поточна конфігурація
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-primary">База даних:</h6>
+                    <small class="text-muted">{{ config.database.DATABASE_URL }}</small>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-success">Статус бота:</h6>
+                    <span class="badge bg-success">
+                        <i class="fas fa-circle"></i> Активний
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-info">Останні зміни:</h6>
+                    <small class="text-muted" id="last-updated">Ніколи</small>
+                </div>
+                
+                <hr>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="testConfiguration()">
+                        <i class="fas fa-vial"></i> Тест конфігурації
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="exportConfiguration()">
+                        <i class="fas fa-download"></i> Експорт налаштувань
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="showConfigJson()">
+                        <i class="fas fa-code"></i> Показати JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-question-circle"></i> Довідка
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Рекомендації:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> Максимальний розмір файлу: 50-500 МБ</li>
+                        <li><i class="fas fa-check text-success"></i> Тривалість відео: до 60 хвилин</li>
+                        <li><i class="fas fa-check text-success"></i> Завантажень на годину: 5-20</li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <h6>Безпека:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-shield-alt text-warning"></i> Змініть пароль адміністратора</li>
+                        <li><i class="fas fa-shield-alt text-warning"></i> Використовуйте HTTPS в продакшені</li>
+                        <li><i class="fas fa-shield-alt text-warning"></i> Обмежте доступ до панелі</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration JSON Modal -->
+<div class="modal fade" id="configJsonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-code"></i> Конфігурація JSON
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="configJsonContent" class="bg-light p-3 rounded"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="button" class="btn btn-primary" onclick="copyConfigJson()">
+                    <i class="fas fa-copy"></i> Копіювати
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadCurrentConfig();
+});
+
+document.getElementById('configForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveConfiguration();
+});
+
+function loadCurrentConfig() {
+    fetch('/api/config')
+        .then(response => response.json())
+        .then(data => {
+            // Update form fields with current values
+            document.getElementById('bot_name').value = data.bot_name || '';
+            document.getElementById('max_file_size_mb').value = data.max_file_size_mb || 50;
+            document.getElementById('max_duration_minutes').value = data.max_duration_minutes || 60;
+            document.getElementById('quality_video').value = data.quality_video || '720p';
+            document.getElementById('quality_audio').value = data.quality_audio || '128k';
+            document.getElementById('max_downloads_per_user_hour').value = data.max_downloads_per_user_hour || 10;
+            document.getElementById('rate_limit_requests_per_minute').value = data.rate_limit_requests_per_minute || 30;
+            document.getElementById('log_level').value = data.log_level || 'INFO';
+            document.getElementById('download_path').value = data.download_path || './downloads';
+            document.getElementById('temp_path').value = data.temp_path || './temp';
+            
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        })
+        .catch(error => {
+            console.error('Error loading config:', error);
+            showAlert('Помилка завантаження конфігурації', 'danger');
+        });
+}
+
+function saveConfiguration() {
+    const configData = {
+        bot_name: document.getElementById('bot_name').value,
+        max_file_size_mb: parseInt(document.getElementById('max_file_size_mb').value),
+        max_duration_minutes: parseInt(document.getElementById('max_duration_minutes').value),
+        quality_video: document.getElementById('quality_video').value,
+        quality_audio: document.getElementById('quality_audio').value,
+        max_downloads_per_user_hour: parseInt(document.getElementById('max_downloads_per_user_hour').value),
+        rate_limit_requests_per_minute: parseInt(document.getElementById('rate_limit_requests_per_minute').value),
+        log_level: document.getElementById('log_level').value,
+        download_path: document.getElementById('download_path').value,
+        temp_path: document.getElementById('temp_path').value
+    };
+
+    fetch('/api/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(configData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showAlert('Конфігурацію успішно збережено!', 'success');
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        } else {
+            showAlert('Помилка збереження: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving config:', error);
+        showAlert('Помилка збереження конфігурації', 'danger');
+    });
+}
+
+function resetForm() {
+    if (confirm('Ви впевнені, що хочете скинути всі зміни?')) {
+        loadCurrentConfig();
+    }
+}
+
+function testConfiguration() {
+    showAlert('Тестування конфігурації...', 'info');
+    
+    fetch('/api/test-youtube')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert('Конфігурація працює правильно!', 'success');
+            } else {
+                showAlert('Помилка конфігурації: ' + data.message, 'warning');
+            }
+        })
+        .catch(error => {
+            showAlert('Помилка тестування конфігурації', 'danger');
+        });
+}
+
+function exportConfiguration() {
+    fetch('/api/config')
+        .then(response => response.json())
+        .then(data => {
+            const configBlob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(configBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bot-config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showAlert('Конфігурацію експортовано!', 'success');
+        })
+        .catch(error => {
+            showAlert('Помилка експорту конфігурації', 'danger');
+        });
+}
+
+function showConfigJson() {
+    fetch('/api/config')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('configJsonContent').textContent = JSON.stringify(data, null, 2);
+            new bootstrap.Modal(document.getElementById('configJsonModal')).show();
+        })
+        .catch(error => {
+            showAlert('Помилка завантаження JSON', 'danger');
+        });
+}
+
+function copyConfigJson() {
+    const content = document.getElementById('configJsonContent').textContent;
+    navigator.clipboard.writeText(content).then(() => {
+        showAlert('JSON скопійовано в буфер обміну!', 'success');
+    }).catch(() => {
+        showAlert('Помилка копіювання', 'danger');
+    });
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,610 @@
+{% extends "base.html" %}
+
+{% block title %}Логи - YouTube Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-file-alt text-primary"></i>
+            Перегляд логів
+        </h1>
+    </div>
+</div>
+
+<!-- Log Controls -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-cog"></i> Налаштування перегляду
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="logLevel" class="form-label">Рівень логування:</label>
+                        <select class="form-select" id="logLevel">
+                            <option value="">Всі рівні</option>
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="INFO">INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="logSearch" class="form-label">Пошук:</label>
+                        <input type="text" class="form-control" id="logSearch" 
+                               placeholder="Пошук в логах...">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="logLines" class="form-label">Кількість рядків:</label>
+                        <select class="form-select" id="logLines">
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                            <label class="form-check-label" for="autoRefresh">
+                                Авто-оновлення
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button class="btn btn-primary btn-sm" onclick="refreshLogs()">
+                                <i class="fas fa-sync"></i> Оновити
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-success btn-sm" onclick="exportLogs()">
+                                <i class="fas fa-download"></i> Експорт логів
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="clearLogDisplay()">
+                                <i class="fas fa-eraser"></i> Очистити відображення
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="scrollToBottom()">
+                                <i class="fas fa-arrow-down"></i> До кінця
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="scrollToTop()">
+                                <i class="fas fa-arrow-up"></i> До початку
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Display -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-terminal"></i> Логи бота
+                    <span class="badge bg-info ms-2" id="logCount">0 рядків</span>
+                </h6>
+                <div>
+                    <span class="text-muted" id="lastUpdate">Ніколи не оновлювалось</span>
+                    <span class="status-indicator ms-2" id="connectionStatus">
+                        <i class="fas fa-circle text-success"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="log-container" id="logContainer">
+                    <pre class="log-content" id="logContent">
+                        <div class="text-center text-muted p-4">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <div>Завантаження логів...</div>
+                        </div>
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Entry Details Modal -->
+<div class="modal fade" id="logDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i> Деталі лог-запису
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="logDetailsContent">
+                <!-- Content will be loaded by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="button" class="btn btn-primary" onclick="copyLogEntry()">
+                    <i class="fas fa-copy"></i> Копіювати
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+.log-container {
+    height: 600px;
+    overflow-y: auto;
+    background-color: #1e1e1e;
+    border-radius: 0 0 0.375rem 0.375rem;
+}
+
+.log-content {
+    color: #d4d4d4;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+    padding: 1rem;
+    background-color: transparent;
+    border: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.log-line {
+    margin: 0;
+    padding: 2px 0;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+.log-line:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left-color: #007bff;
+}
+
+.log-line.debug {
+    color: #9ca3af;
+}
+
+.log-line.info {
+    color: #3b82f6;
+}
+
+.log-line.warning {
+    color: #f59e0b;
+}
+
+.log-line.error {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.log-line.critical {
+    color: #dc2626;
+    font-weight: 700;
+    background-color: rgba(220, 38, 38, 0.1);
+}
+
+.log-timestamp {
+    color: #6b7280;
+    font-weight: normal;
+}
+
+.log-level {
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 0.75rem;
+}
+
+.log-level.DEBUG {
+    background-color: rgba(156, 163, 175, 0.2);
+    color: #9ca3af;
+}
+
+.log-level.INFO {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.log-level.WARNING {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.log-level.ERROR {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.log-level.CRITICAL {
+    background-color: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+}
+
+.log-message {
+    margin-left: 0.5rem;
+}
+
+.status-indicator {
+    font-size: 0.75rem;
+}
+
+.search-highlight {
+    background-color: #fbbf24;
+    color: #000;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+/* Scrollbar styling for log container */
+.log-container::-webkit-scrollbar {
+    width: 12px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 6px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let autoRefreshInterval = null;
+let currentLogs = [];
+let filteredLogs = [];
+let selectedLogEntry = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadLogs();
+    setupEventListeners();
+    startAutoRefresh();
+});
+
+function setupEventListeners() {
+    document.getElementById('logLevel').addEventListener('change', filterLogs);
+    document.getElementById('logSearch').addEventListener('input', debounce(filterLogs, 300));
+    document.getElementById('logLines').addEventListener('change', loadLogs);
+    document.getElementById('autoRefresh').addEventListener('change', toggleAutoRefresh);
+}
+
+function loadLogs() {
+    const lines = document.getElementById('logLines').value;
+    
+    fetch(`/api/logs?lines=${lines}`)
+        .then(response => response.json())
+        .then(data => {
+            currentLogs = data.logs || [];
+            
+            // Generate mock logs for demo if empty
+            if (currentLogs.length === 0) {
+                currentLogs = generateMockLogs();
+            }
+            
+            filterLogs();
+            updateLogCount();
+            updateLastUpdateTime();
+            updateConnectionStatus(true);
+        })
+        .catch(error => {
+            console.error('Error loading logs:', error);
+            updateConnectionStatus(false);
+            showError('Помилка завантаження логів');
+        });
+}
+
+function generateMockLogs() {
+    const mockLogs = [];
+    const logLevels = ['DEBUG', 'INFO', 'WARNING', 'ERROR'];
+    const messages = [
+        'Bot started successfully',
+        'User 123456789 requested video download',
+        'YouTube video info retrieved: Sample Video Title',
+        'Download completed successfully',
+        'Rate limit exceeded for user 987654321',
+        'Database connection established',
+        'Processing download queue',
+        'Failed to download video: Network timeout',
+        'User banned for spam behavior',
+        'Configuration updated',
+        'Memory usage: 245MB',
+        'Active users: 42',
+        'Download task queued',
+        'FFmpeg conversion started',
+        'File cleanup completed'
+    ];
+    
+    for (let i = 0; i < 100; i++) {
+        const timestamp = new Date(Date.now() - (100 - i) * 60000).toISOString();
+        const level = logLevels[Math.floor(Math.random() * logLevels.length)];
+        const message = messages[Math.floor(Math.random() * messages.length)];
+        
+        const logLine = `${timestamp} | ${level.padEnd(8)} | ${message} #${i + 1}`;
+        mockLogs.push(logLine);
+    }
+    
+    return mockLogs;
+}
+
+function filterLogs() {
+    const levelFilter = document.getElementById('logLevel').value;
+    const searchTerm = document.getElementById('logSearch').value.toLowerCase();
+    
+    filteredLogs = currentLogs.filter(log => {
+        const matchesLevel = !levelFilter || log.includes(levelFilter);
+        const matchesSearch = !searchTerm || log.toLowerCase().includes(searchTerm);
+        return matchesLevel && matchesSearch;
+    });
+    
+    displayLogs();
+}
+
+function displayLogs() {
+    const logContent = document.getElementById('logContent');
+    
+    if (filteredLogs.length === 0) {
+        logContent.innerHTML = `
+            <div class="text-center text-muted p-4">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <div>Логи не знайдено</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const searchTerm = document.getElementById('logSearch').value;
+    const logsHtml = filteredLogs.map((log, index) => {
+        const logLevel = extractLogLevel(log);
+        const highlightedLog = searchTerm ? highlightSearchTerm(log, searchTerm) : escapeHtml(log);
+        
+        return `<div class="log-line ${logLevel.toLowerCase()}" onclick="showLogDetails(${index})" title="Клікніть для деталей">
+            ${highlightedLog}
+        </div>`;
+    }).join('');
+    
+    logContent.innerHTML = logsHtml;
+    updateLogCount();
+}
+
+function extractLogLevel(log) {
+    const levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'];
+    for (const level of levels) {
+        if (log.includes(level)) {
+            return level;
+        }
+    }
+    return 'INFO';
+}
+
+function highlightSearchTerm(text, searchTerm) {
+    if (!searchTerm) return escapeHtml(text);
+    
+    const escapedText = escapeHtml(text);
+    const escapedSearchTerm = escapeHtml(searchTerm);
+    const regex = new RegExp(`(${escapedSearchTerm})`, 'gi');
+    
+    return escapedText.replace(regex, '<span class="search-highlight">$1</span>');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showLogDetails(index) {
+    const log = filteredLogs[index];
+    if (!log) return;
+    
+    selectedLogEntry = log;
+    
+    // Parse log entry
+    const parts = log.split(' | ');
+    const timestamp = parts[0] || 'Невідомо';
+    const level = parts[1]?.trim() || 'INFO';
+    const message = parts.slice(2).join(' | ') || log;
+    
+    const content = `
+        <div class="row">
+            <div class="col-12">
+                <h6>Деталі лог-запису:</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Час:</strong></td>
+                        <td>${formatLogTimestamp(timestamp)}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Рівень:</strong></td>
+                        <td><span class="log-level ${level}">${level}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Повідомлення:</strong></td>
+                        <td>${escapeHtml(message)}</td>
+                    </tr>
+                </table>
+                
+                <h6>Повний запис:</h6>
+                <pre class="bg-dark text-light p-3 rounded">${escapeHtml(log)}</pre>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('logDetailsContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('logDetailsModal')).show();
+}
+
+function formatLogTimestamp(timestamp) {
+    try {
+        const date = new Date(timestamp);
+        return date.toLocaleString('uk-UA');
+    } catch (e) {
+        return timestamp;
+    }
+}
+
+function copyLogEntry() {
+    if (!selectedLogEntry) return;
+    
+    if (window.YouTubeBotPanel && window.YouTubeBotPanel.copyToClipboard) {
+        window.YouTubeBotPanel.copyToClipboard(selectedLogEntry);
+    } else {
+        navigator.clipboard.writeText(selectedLogEntry).then(() => {
+            showNotification('Лог-запис скопійовано', 'success');
+        }).catch(() => {
+            showNotification('Помилка копіювання', 'error');
+        });
+    }
+}
+
+function refreshLogs() {
+    loadLogs();
+    showNotification('Логи оновлено', 'success');
+}
+
+function exportLogs() {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `bot-logs-${timestamp}.txt`;
+    const content = filteredLogs.join('\n');
+    
+    if (window.YouTubeBotPanel && window.YouTubeBotPanel.downloadFile) {
+        window.YouTubeBotPanel.downloadFile(content, filename, 'text/plain');
+    } else {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    
+    showNotification('Логи експортовано', 'success');
+}
+
+function clearLogDisplay() {
+    document.getElementById('logContent').innerHTML = `
+        <div class="text-center text-muted p-4">
+            <i class="fas fa-broom fa-2x mb-3"></i>
+            <div>Відображення очищено</div>
+        </div>
+    `;
+    updateLogCount(0);
+}
+
+function scrollToBottom() {
+    const container = document.getElementById('logContainer');
+    container.scrollTop = container.scrollHeight;
+}
+
+function scrollToTop() {
+    const container = document.getElementById('logContainer');
+    container.scrollTop = 0;
+}
+
+function toggleAutoRefresh() {
+    const enabled = document.getElementById('autoRefresh').checked;
+    
+    if (enabled) {
+        startAutoRefresh();
+    } else {
+        stopAutoRefresh();
+    }
+}
+
+function startAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    autoRefreshInterval = setInterval(() => {
+        if (document.getElementById('autoRefresh').checked) {
+            loadLogs();
+        }
+    }, 5000); // Refresh every 5 seconds
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+function updateLogCount(count = null) {
+    const logCount = document.getElementById('logCount');
+    const displayCount = count !== null ? count : filteredLogs.length;
+    logCount.textContent = `${displayCount} рядків`;
+}
+
+function updateLastUpdateTime() {
+    const lastUpdate = document.getElementById('lastUpdate');
+    lastUpdate.textContent = new Date().toLocaleTimeString('uk-UA');
+}
+
+function updateConnectionStatus(connected) {
+    const statusIndicator = document.getElementById('connectionStatus');
+    
+    if (connected) {
+        statusIndicator.innerHTML = '<i class="fas fa-circle text-success" title="З\'єднано"></i>';
+    } else {
+        statusIndicator.innerHTML = '<i class="fas fa-circle text-danger" title="Помилка з\'єднання"></i>';
+    }
+}
+
+function showNotification(message, type) {
+    if (window.YouTubeBotPanel && window.YouTubeBotPanel.showNotification) {
+        window.YouTubeBotPanel.showNotification(message, type);
+    } else {
+        console.log(`${type.toUpperCase()}: ${message}`);
+    }
+}
+
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+{% endblock %}
