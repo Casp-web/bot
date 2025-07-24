@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Панель управління - YouTube Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt text-primary"></i>
+            Панель управління
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Всього користувачів
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-users">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Завантажень сьогодні
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="downloads-today">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-download fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Успішні завантаження
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="successful-downloads">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Активні користувачі
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-users">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bot Status and Quick Actions -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-robot"></i> Статус бота
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>{{ bot_name }}</h5>
+                        <p class="text-muted">Назва бота</p>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-success">
+                                <i class="fas fa-circle"></i> Онлайн
+                            </span>
+                            <span class="badge bg-info ms-2">
+                                <i class="fas fa-clock"></i> Запущено: сьогодні
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Швидкі дії:</h6>
+                        <button class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="testYouTubeService()">
+                            <i class="fas fa-vial"></i> Тест YouTube API
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm me-2 mb-2" onclick="restartBot()">
+                            <i class="fas fa-redo"></i> Перезапустити
+                        </button>
+                        <a href="{{ url_for('config_page') }}" class="btn btn-outline-secondary btn-sm mb-2">
+                            <i class="fas fa-cog"></i> Налаштування
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie"></i> Розподіл завантажень
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="downloadsPieChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-primary"></i> Відео
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-success"></i> Аудіо
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-info"></i> Помилки
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-history"></i> Остання активність
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="recentActivityTable">
+                        <thead>
+                            <tr>
+                                <th>Час</th>
+                                <th>Користувач</th>
+                                <th>Дія</th>
+                                <th>Статус</th>
+                                <th>Деталі</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-activity-body">
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <i class="fas fa-spinner fa-spin"></i> Завантаження даних...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    
+    // Refresh data every 30 seconds
+    setInterval(loadDashboardData, 30000);
+});
+
+function loadDashboardData() {
+    // Load user statistics
+    fetch('/api/users')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-users').textContent = data.total_users || 0;
+            document.getElementById('active-users').textContent = data.active_users || 0;
+        })
+        .catch(error => {
+            console.error('Error loading user data:', error);
+            document.getElementById('total-users').innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i>';
+            document.getElementById('active-users').innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i>';
+        });
+
+    // Load download statistics
+    fetch('/api/downloads')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('downloads-today').textContent = data.downloads_today || 0;
+            document.getElementById('successful-downloads').textContent = data.successful_downloads || 0;
+            
+            // Update pie chart
+            updatePieChart(data);
+            
+            // Update recent activity
+            updateRecentActivity(data.recent_downloads || []);
+        })
+        .catch(error => {
+            console.error('Error loading download data:', error);
+            document.getElementById('downloads-today').innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i>';
+            document.getElementById('successful-downloads').innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i>';
+        });
+}
+
+let pieChart = null;
+
+function updatePieChart(data) {
+    const ctx = document.getElementById('downloadsPieChart').getContext('2d');
+    
+    if (pieChart) {
+        pieChart.destroy();
+    }
+    
+    pieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Відео', 'Аудіо', 'Помилки'],
+            datasets: [{
+                data: [
+                    data.video_downloads || 0,
+                    data.audio_downloads || 0,
+                    data.failed_downloads || 0
+                ],
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        },
+    });
+}
+
+function updateRecentActivity(activities) {
+    const tbody = document.getElementById('recent-activity-body');
+    
+    if (activities.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    <i class="fas fa-info-circle"></i> Немає даних про активність
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = activities.map(activity => `
+        <tr>
+            <td>${activity.time || 'Невідомо'}</td>
+            <td>${activity.user || 'Невідомо'}</td>
+            <td>${activity.action || 'Невідомо'}</td>
+            <td>
+                <span class="badge bg-${activity.status === 'success' ? 'success' : 'danger'}">
+                    ${activity.status || 'Невідомо'}
+                </span>
+            </td>
+            <td>${activity.details || 'Немає деталей'}</td>
+        </tr>
+    `).join('');
+}
+</script>
+{% endblock %}

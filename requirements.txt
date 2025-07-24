@@ -13,3 +13,5 @@ celery>=5.3.6
 ffmpeg-python>=0.2.0
 Pillow>=10.0.0
 validators>=0.22.0
+flask>=3.0.0
+flask-login>=0.6.3

@@ -1,0 +1,598 @@
+{% extends "base.html" %}
+
+{% block title %}Користувачі - YouTube Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-users text-primary"></i>
+            Управління користувачами
+        </h1>
+    </div>
+</div>
+
+<!-- User Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Всього користувачів
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-users-count">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Активні сьогодні
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-users-count">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Заблоковані
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="banned-users-count">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-slash fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Нові за тиждень
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="new-users-count">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list"></i> Список користувачів
+                </h6>
+                <div>
+                    <button class="btn btn-sm btn-primary" onclick="refreshUsers()">
+                        <i class="fas fa-sync"></i> Оновити
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="exportUsers()">
+                        <i class="fas fa-download"></i> Експорт
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Search and Filter -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" id="searchUsers" 
+                               placeholder="Пошук за ім'ям або ID...">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterStatus">
+                            <option value="">Всі статуси</option>
+                            <option value="active">Активні</option>
+                            <option value="banned">Заблоковані</option>
+                            <option value="new">Нові</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="sortBy">
+                            <option value="created_at">За датою реєстрації</option>
+                            <option value="last_seen">За останньою активністю</option>
+                            <option value="downloads_count">За кількістю завантажень</option>
+                            <option value="name">За ім'ям</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Ім'я</th>
+                                <th>Username</th>
+                                <th>Telegram ID</th>
+                                <th>Завантажень</th>
+                                <th>Остання активність</th>
+                                <th>Статус</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <i class="fas fa-spinner fa-spin"></i> Завантаження користувачів...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Users pagination">
+                    <ul class="pagination justify-content-center" id="usersPagination">
+                        <!-- Pagination will be generated by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user"></i> Деталі користувача
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- Content will be loaded by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="button" class="btn btn-warning" id="banUserBtn" onclick="toggleUserBan()">
+                    <i class="fas fa-ban"></i> Заблокувати
+                </button>
+                <button type="button" class="btn btn-danger" onclick="deleteUser()">
+                    <i class="fas fa-trash"></i> Видалити
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ban User Modal -->
+<div class="modal fade" id="banUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-ban text-warning"></i> Блокування користувача
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ви впевнені, що хочете заблокувати цього користувача?</p>
+                <div class="mb-3">
+                    <label for="banReason" class="form-label">Причина блокування:</label>
+                    <textarea class="form-control" id="banReason" rows="3" 
+                              placeholder="Введіть причину блокування..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-warning" onclick="confirmBanUser()">
+                    <i class="fas fa-ban"></i> Заблокувати
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentUsers = [];
+let currentPage = 1;
+let usersPerPage = 10;
+let selectedUserId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+    
+    // Search functionality
+    document.getElementById('searchUsers').addEventListener('input', filterUsers);
+    document.getElementById('filterStatus').addEventListener('change', filterUsers);
+    document.getElementById('sortBy').addEventListener('change', sortUsers);
+});
+
+function loadUsers() {
+    fetch('/api/users')
+        .then(response => response.json())
+        .then(data => {
+            // Update statistics
+            document.getElementById('total-users-count').textContent = data.total_users || 0;
+            document.getElementById('active-users-count').textContent = data.active_users || 0;
+            document.getElementById('banned-users-count').textContent = data.banned_users || 0;
+            document.getElementById('new-users-count').textContent = data.new_users || 0;
+            
+            // Store users data
+            currentUsers = data.users || [];
+            
+            // Generate mock users for demo
+            if (currentUsers.length === 0) {
+                currentUsers = generateMockUsers();
+            }
+            
+            displayUsers();
+        })
+        .catch(error => {
+            console.error('Error loading users:', error);
+            showError('Помилка завантаження користувачів');
+        });
+}
+
+function generateMockUsers() {
+    const mockUsers = [];
+    const names = ['Олександр', 'Марія', 'Іван', 'Анна', 'Петро', 'Катерина', 'Дмитро', 'Світлана'];
+    const usernames = ['alex_ua', 'maria_k', 'ivan123', 'anna_s', 'petro_m', 'kate_l', 'dima_v', 'sveta_p'];
+    
+    for (let i = 1; i <= 25; i++) {
+        const randomName = names[Math.floor(Math.random() * names.length)];
+        const randomUsername = usernames[Math.floor(Math.random() * usernames.length)] + i;
+        const isActive = Math.random() > 0.3;
+        const isBanned = Math.random() > 0.9;
+        
+        mockUsers.push({
+            id: i,
+            name: randomName,
+            username: randomUsername,
+            telegram_id: 100000000 + i,
+            downloads_count: Math.floor(Math.random() * 50),
+            last_seen: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+            created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+            is_banned: isBanned,
+            is_active: isActive && !isBanned
+        });
+    }
+    
+    return mockUsers;
+}
+
+function displayUsers() {
+    const tbody = document.getElementById('users-table-body');
+    const startIndex = (currentPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    const pageUsers = currentUsers.slice(startIndex, endIndex);
+    
+    if (pageUsers.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted">
+                    <i class="fas fa-info-circle"></i> Користувачів не знайдено
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = pageUsers.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td>${user.name || 'Невідомо'}</td>
+            <td>@${user.username || 'немає'}</td>
+            <td>${user.telegram_id}</td>
+            <td>
+                <span class="badge bg-info">${user.downloads_count || 0}</span>
+            </td>
+            <td>${formatDate(user.last_seen)}</td>
+            <td>
+                ${user.is_banned 
+                    ? '<span class="badge bg-danger">Заблокований</span>'
+                    : user.is_active 
+                        ? '<span class="badge bg-success">Активний</span>'
+                        : '<span class="badge bg-secondary">Неактивний</span>'
+                }
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="showUserDetails(${user.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="showBanModal(${user.id})">
+                    <i class="fas fa-ban"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    updatePagination();
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(currentUsers.length / usersPerPage);
+    const pagination = document.getElementById('usersPagination');
+    
+    let paginationHTML = '';
+    
+    // Previous button
+    paginationHTML += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Попередня</a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage || i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Next button
+    paginationHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Наступна</a>
+        </li>
+    `;
+    
+    pagination.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(currentUsers.length / usersPerPage);
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        displayUsers();
+    }
+}
+
+function filterUsers() {
+    const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    
+    let filteredUsers = currentUsers.filter(user => {
+        const matchesSearch = !searchTerm || 
+            user.name?.toLowerCase().includes(searchTerm) ||
+            user.username?.toLowerCase().includes(searchTerm) ||
+            user.telegram_id.toString().includes(searchTerm);
+        
+        let matchesStatus = true;
+        if (statusFilter === 'active') matchesStatus = user.is_active;
+        else if (statusFilter === 'banned') matchesStatus = user.is_banned;
+        else if (statusFilter === 'new') {
+            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            matchesStatus = new Date(user.created_at) > weekAgo;
+        }
+        
+        return matchesSearch && matchesStatus;
+    });
+    
+    currentUsers = filteredUsers;
+    currentPage = 1;
+    displayUsers();
+}
+
+function sortUsers() {
+    const sortBy = document.getElementById('sortBy').value;
+    
+    currentUsers.sort((a, b) => {
+        switch (sortBy) {
+            case 'created_at':
+                return new Date(b.created_at) - new Date(a.created_at);
+            case 'last_seen':
+                return new Date(b.last_seen) - new Date(a.last_seen);
+            case 'downloads_count':
+                return (b.downloads_count || 0) - (a.downloads_count || 0);
+            case 'name':
+                return (a.name || '').localeCompare(b.name || '');
+            default:
+                return 0;
+        }
+    });
+    
+    displayUsers();
+}
+
+function showUserDetails(userId) {
+    const user = currentUsers.find(u => u.id === userId);
+    if (!user) return;
+    
+    selectedUserId = userId;
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Основна інформація:</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>ID:</strong></td><td>${user.id}</td></tr>
+                    <tr><td><strong>Ім'я:</strong></td><td>${user.name || 'Невідомо'}</td></tr>
+                    <tr><td><strong>Username:</strong></td><td>@${user.username || 'немає'}</td></tr>
+                    <tr><td><strong>Telegram ID:</strong></td><td>${user.telegram_id}</td></tr>
+                    <tr><td><strong>Зареєстрований:</strong></td><td>${formatDate(user.created_at)}</td></tr>
+                    <tr><td><strong>Остання активність:</strong></td><td>${formatDate(user.last_seen)}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Статистика:</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Завантажень:</strong></td><td>${user.downloads_count || 0}</td></tr>
+                    <tr><td><strong>Статус:</strong></td><td>
+                        ${user.is_banned 
+                            ? '<span class="badge bg-danger">Заблокований</span>'
+                            : user.is_active 
+                                ? '<span class="badge bg-success">Активний</span>'
+                                : '<span class="badge bg-secondary">Неактивний</span>'
+                        }
+                    </td></tr>
+                </table>
+                
+                <h6>Дії:</h6>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-sm btn-outline-info" onclick="viewUserDownloads(${user.id})">
+                        <i class="fas fa-download"></i> Переглянути завантаження
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="sendMessage(${user.id})">
+                        <i class="fas fa-paper-plane"></i> Надіслати повідомлення
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('userDetailsContent').innerHTML = content;
+    
+    // Update ban button
+    const banBtn = document.getElementById('banUserBtn');
+    if (user.is_banned) {
+        banBtn.innerHTML = '<i class="fas fa-unlock"></i> Розблокувати';
+        banBtn.className = 'btn btn-success';
+    } else {
+        banBtn.innerHTML = '<i class="fas fa-ban"></i> Заблокувати';
+        banBtn.className = 'btn btn-warning';
+    }
+    
+    new bootstrap.Modal(document.getElementById('userDetailsModal')).show();
+}
+
+function showBanModal(userId) {
+    selectedUserId = userId;
+    new bootstrap.Modal(document.getElementById('banUserModal')).show();
+}
+
+function confirmBanUser() {
+    const reason = document.getElementById('banReason').value;
+    
+    // In a real implementation, this would make an API call
+    console.log(`Banning user ${selectedUserId} with reason: ${reason}`);
+    
+    // Update user status in mock data
+    const user = currentUsers.find(u => u.id === selectedUserId);
+    if (user) {
+        user.is_banned = true;
+        user.is_active = false;
+        user.ban_reason = reason;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('banUserModal')).hide();
+    displayUsers();
+    showSuccess('Користувача заблоковано');
+}
+
+function toggleUserBan() {
+    const user = currentUsers.find(u => u.id === selectedUserId);
+    if (!user) return;
+    
+    if (user.is_banned) {
+        // Unban user
+        user.is_banned = false;
+        user.is_active = true;
+        delete user.ban_reason;
+        showSuccess('Користувача розблоковано');
+    } else {
+        // Show ban modal
+        bootstrap.Modal.getInstance(document.getElementById('userDetailsModal')).hide();
+        showBanModal(selectedUserId);
+        return;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('userDetailsModal')).hide();
+    displayUsers();
+}
+
+function refreshUsers() {
+    loadUsers();
+    showSuccess('Список користувачів оновлено');
+}
+
+function exportUsers() {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "ID,Name,Username,Telegram ID,Downloads,Last Seen,Status\n"
+        + currentUsers.map(user => 
+            `${user.id},"${user.name || ''}","${user.username || ''}",${user.telegram_id},${user.downloads_count || 0},"${formatDate(user.last_seen)}","${user.is_banned ? 'Banned' : user.is_active ? 'Active' : 'Inactive'}"`
+        ).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "users_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showSuccess('Дані користувачів експортовано');
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Невідомо';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uk-UA') + ' ' + date.toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'});
+}
+
+function showSuccess(message) {
+    showAlert(message, 'success');
+}
+
+function showError(message) {
+    showAlert(message, 'danger');
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}
