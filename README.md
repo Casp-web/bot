@@ -12,7 +12,20 @@
 - **Моніторинг завантажень** з детальною аналітикою
 - **Перегляд логів** з фільтрацією та пошуком
 
-### 🚀 Швидкий старт веб-панелі
+### 🚀 Швидкий старт
+
+#### Автоматичне встановлення:
+```bash
+# Клонувати репозиторій
+git clone https://github.com/Casp-web/bot.git
+cd bot
+git checkout cursor/youtube-595b
+
+# Запустити автоматичний деплой
+./deploy.sh
+```
+
+#### Запуск веб-панелі:
 ```bash
 # Запустити веб-панель
 python start_web_panel.py
@@ -21,7 +34,10 @@ python start_web_panel.py
 # Логін: admin | Пароль: admin123
 ```
 
-📖 **Детальна документація веб-панелі:** [WEB_PANEL_GUIDE.md](WEB_PANEL_GUIDE.md)
+📖 **Документація:**
+- **Повний гід налаштування:** [SETUP_GUIDE.md](SETUP_GUIDE.md)
+- **Веб-панель розробника:** [WEB_PANEL_GUIDE.md](WEB_PANEL_GUIDE.md)
+- **Автоматичний деплой:** `./deploy.sh`
 
 ## ✨ Особливості
 
@@ -133,10 +149,14 @@ python main.py
 4. **Відстеження прогресу** - спостерігайте за процесом завантаження
 5. **Отримання файлу** - завантажте готовий файл
 
-### Підтримувані формати URL:
-- `https://www.youtube.com/watch?v=VIDEO_ID`
-- `https://youtu.be/VIDEO_ID`
-- `https://youtube.com/embed/VIDEO_ID`
+### 🔗 Підтримувані формати URL:
+- **Стандартні:** `https://www.youtube.com/watch?v=VIDEO_ID`
+- **Короткі:** `https://youtu.be/VIDEO_ID`
+- **YouTube Shorts:** `https://www.youtube.com/shorts/VIDEO_ID`
+- **YouTube Music:** `https://music.youtube.com/watch?v=VIDEO_ID`
+- **Embed:** `https://www.youtube.com/embed/VIDEO_ID`
+- **Мобільні:** `https://m.youtube.com/watch?v=VIDEO_ID`
+- **З параметрами:** `https://www.youtube.com/watch?v=VIDEO_ID&t=30s`
 
 ## ⚙️ Конфігурація
 

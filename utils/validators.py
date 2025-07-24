@@ -11,14 +11,31 @@ class URLValidator:
         'youtube.com',
         'www.youtube.com',
         'm.youtube.com',
+        'music.youtube.com',
         'youtu.be',
         'www.youtu.be'
     ]
     
     YOUTUBE_PATTERNS = [
-        r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([^&\n?#]+)',
-        r'youtube\.com/v/([^&\n?#]+)',
-        r'youtube\.com/watch\?.*v=([^&\n?#]+)',
+        # Стандартні watch URL
+        r'(?:youtube\.com/watch\?v=)([a-zA-Z0-9_-]{11})(?:[&\s#]|$)',
+        r'(?:youtube\.com/embed/)([a-zA-Z0-9_-]{11})(?:[/?\s#]|$)',
+        r'(?:youtube\.com/v/)([a-zA-Z0-9_-]{11})(?:[/?\s#]|$)',
+        
+        # YouTube Shorts
+        r'(?:youtube\.com/shorts/)([a-zA-Z0-9_-]{11})(?:[/?\s#]|$)',
+        
+        # YouTube Music
+        r'(?:music\.youtube\.com/watch\?v=)([a-zA-Z0-9_-]{11})(?:[&\s#]|$)',
+        
+        # Мобільні версії
+        r'(?:m\.youtube\.com/watch\?v=)([a-zA-Z0-9_-]{11})(?:[&\s#]|$)',
+        
+        # youtu.be короткі посилання
+        r'(?:youtu\.be/)([a-zA-Z0-9_-]{11})(?:[?\s#]|$)',
+        
+        # Інші можливі формати з параметром v=
+        r'youtube\.com/.*[?&]v=([a-zA-Z0-9_-]{11})(?:[&\s#]|$)',
     ]
     
     def is_valid_url(self, url: str) -> bool:
@@ -30,6 +47,13 @@ class URLValidator:
     
     def is_valid_youtube_url(self, url: str) -> bool:
         """Перевірка чи є URL валідним YouTube посиланням"""
+        if not url or not isinstance(url, str):
+            return False
+        
+        # Очищуємо URL від пробілів
+        url = url.strip()
+        
+        # Базова перевірка URL
         if not self.is_valid_url(url):
             return False
         
@@ -41,31 +65,29 @@ class URLValidator:
             if not any(yt_domain in domain for yt_domain in self.YOUTUBE_DOMAINS):
                 return False
             
-            # Перевірка патернів
-            for pattern in self.YOUTUBE_PATTERNS:
-                if re.search(pattern, url, re.IGNORECASE):
-                    return True
-            
-            return False
+            # Перевірка патернів та отримання video_id
+            video_id = self.extract_video_id(url)
+            return video_id is not None
             
         except Exception:
             return False
     
     def extract_video_id(self, url: str) -> Optional[str]:
         """Витягнути ID відео з YouTube URL"""
-        if not self.is_valid_youtube_url(url):
+        if not url or not isinstance(url, str):
             return None
+        
+        # Очищуємо URL від пробілів
+        url = url.strip()
         
         for pattern in self.YOUTUBE_PATTERNS:
             match = re.search(pattern, url, re.IGNORECASE)
             if match:
                 video_id = match.group(1)
-                # Очищуємо від додаткових параметрів
-                if '&' in video_id:
-                    video_id = video_id.split('&')[0]
-                if '?' in video_id:
-                    video_id = video_id.split('?')[0]
-                return video_id
+                
+                # Валідуємо довжину ID (YouTube ID завжди 11 символів)
+                if len(video_id) == 11 and re.match(r'^[a-zA-Z0-9_-]+$', video_id):
+                    return video_id
         
         return None
     

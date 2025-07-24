@@ -12,7 +12,7 @@ from database.repositories.user_repository import UserRepository
 router = Router()
 
 
-@router.message(F.text.regexp(r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([^&\n?#]+)'))
+@router.message(F.text.regexp(r'(?:youtube\.com|youtu\.be|music\.youtube\.com)'))
 async def handle_youtube_url(message: Message, state: FSMContext, db_user=None, user_repo: UserRepository = None):
     """Автоматична обробка YouTube URL"""
     try:
@@ -24,10 +24,15 @@ async def handle_youtube_url(message: Message, state: FSMContext, db_user=None, 
         if not url_validator.is_valid_youtube_url(url):
             await message.answer(
                 "❌ Невірне посилання на YouTube.\n\n"
-                "Переконайтеся, що посилання має один з форматів:\n"
-                "• https://www.youtube.com/watch?v=VIDEO_ID\n"
-                "• https://youtu.be/VIDEO_ID\n"
-                "• https://youtube.com/embed/VIDEO_ID",
+                "🎯 **Підтримувані формати:**\n"
+                "• `https://www.youtube.com/watch?v=VIDEO_ID`\n"
+                "• `https://youtu.be/VIDEO_ID`\n"
+                "• `https://www.youtube.com/shorts/VIDEO_ID`\n"
+                "• `https://music.youtube.com/watch?v=VIDEO_ID`\n"
+                "• `https://m.youtube.com/watch?v=VIDEO_ID`\n"
+                "• `https://www.youtube.com/embed/VIDEO_ID`\n\n"
+                "💡 **Підказка:** Просто скопіюйте посилання з адресного рядка браузера або кнопки 'Поділитися' на YouTube.",
+                parse_mode="Markdown",
                 reply_markup=MainKeyboard.get_main_menu()
             )
             return
@@ -151,10 +156,16 @@ async def handle_youtube_url(message: Message, state: FSMContext, db_user=None, 
 async def handle_other_url(message: Message):
     """Обробка інших URL (не YouTube)"""
     await message.answer(
-        "❌ Підтримуються тільки посилання на YouTube.\n\n"
-        "Приклади правильних посилань:\n"
-        "• https://www.youtube.com/watch?v=dQw4w9WgXcQ\n"
-        "• https://youtu.be/dQw4w9WgXcQ\n"
-        "• https://youtube.com/embed/dQw4w9WgXcQ",
+        "❌ **Підтримуються тільки посилання на YouTube!**\n\n"
+        "🎯 **Правильні приклади:**\n"
+        "• `https://www.youtube.com/watch?v=dQw4w9WgXcQ`\n"
+        "• `https://youtu.be/dQw4w9WgXcQ`\n"
+        "• `https://www.youtube.com/shorts/dQw4w9WgXcQ`\n\n"
+        "🚫 **Не підтримуються:**\n"
+        "• Instagram, TikTok, Facebook відео\n"
+        "• Інші відеохостинги\n"
+        "• Прямі посилання на файли\n\n"
+        "💡 Надішліть посилання на YouTube відео або скористайтеся головним меню.",
+        parse_mode="Markdown",
         reply_markup=MainKeyboard.get_main_menu()
     )

@@ -36,6 +36,22 @@ class YouTubeService:
                 'extract_flat': False,
                 'writesubtitles': False,
                 'writeautomaticsub': False,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'extractor_args': {
+                    'youtube': {
+                        'skip': ['dash', 'hls'],
+                        'player_skip': ['configs'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-us,en;q=0.5',
+                    'Accept-Encoding': 'gzip,deflate',
+                    'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+                    'Keep-Alive': '300',
+                    'Connection': 'keep-alive',
+                },
             }
             
             loop = asyncio.get_event_loop()
@@ -57,8 +73,31 @@ class YouTubeService:
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 return ydl.extract_info(url, download=False)
+        except yt_dlp.utils.ExtractorError as e:
+            error_msg = str(e).lower()
+            if 'sign in' in error_msg or 'bot' in error_msg:
+                logger.warning(f"YouTube вимагає аутентифікацію для {url}")
+                # Спробуємо з альтернативними налаштуваннями
+                alt_opts = ydl_opts.copy()
+                alt_opts.update({
+                    'extractor_args': {
+                        'youtube': {
+                            'skip': ['dash', 'hls'],
+                            'player_skip': ['js', 'configs'],
+                        }
+                    }
+                })
+                try:
+                    with yt_dlp.YoutubeDL(alt_opts) as ydl:
+                        return ydl.extract_info(url, download=False)
+                except Exception:
+                    logger.error(f"Не вдалося обійти блокування YouTube для {url}")
+                    return None
+            else:
+                logger.error(f"yt-dlp помилка: {e}")
+                return None
         except Exception as e:
-            logger.error(f"yt-dlp помилка: {e}")
+            logger.error(f"Неочікувана помилка yt-dlp: {e}")
             return None
     
     def _parse_video_info(self, info: Dict[str, Any]) -> VideoInfo:
@@ -126,6 +165,22 @@ class YouTubeService:
                 'writeautomaticsub': False,
                 'ignoreerrors': False,
                 'no_warnings': True,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'extractor_args': {
+                    'youtube': {
+                        'skip': ['dash', 'hls'],
+                        'player_skip': ['configs'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-us,en;q=0.5',
+                    'Accept-Encoding': 'gzip,deflate',
+                    'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+                    'Keep-Alive': '300',
+                    'Connection': 'keep-alive',
+                },
             }
             
             if progress_callback:
@@ -162,6 +217,22 @@ class YouTubeService:
                 'writeautomaticsub': False,
                 'ignoreerrors': False,
                 'no_warnings': True,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'extractor_args': {
+                    'youtube': {
+                        'skip': ['dash', 'hls'],
+                        'player_skip': ['configs'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-us,en;q=0.5',
+                    'Accept-Encoding': 'gzip,deflate',
+                    'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+                    'Keep-Alive': '300',
+                    'Connection': 'keep-alive',
+                },
             }
             
             if progress_callback:
@@ -251,17 +322,7 @@ class YouTubeService:
     
     def extract_video_id(self, url: str) -> Optional[str]:
         """Витягування ID відео з URL"""
-        patterns = [
-            r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([^&\n?#]+)',
-            r'youtube\.com/v/([^&\n?#]+)',
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, url)
-            if match:
-                return match.group(1)
-        
-        return None
+        return self.url_validator.extract_video_id(url)
     
     async def is_video_available(self, url: str) -> bool:
         """Перевірка доступності відео"""
